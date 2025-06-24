@@ -1,16 +1,16 @@
 <script setup lang="ts">
+import { ChevronDownIcon, Moon, PanelLeftClose, PanelLeftOpen, Settings, Sun } from 'lucide-vue-next'
 import { Toaster } from '@/components/ui/sonner'
+
 import {
   altSign,
   ctrlKey,
   ctrlSign,
   shiftSign,
 } from '@/config'
-
 import { useStore } from '@/stores'
 import { addPrefix, processClipboardContent } from '@/utils'
 import { copyPlain } from '@/utils/clipboard'
-import { ChevronDownIcon, Moon, PanelLeftClose, PanelLeftOpen, Settings, Sun } from 'lucide-vue-next'
 
 const emit = defineEmits([`addFormat`, `formatContent`, `startCopy`, `endCopy`])
 
@@ -193,7 +193,7 @@ function copy() {
       </Button>
 
       <!-- 复制按钮组 -->
-      <div class="bg-background space-x-1 text-background-foreground mx-2 flex items-center border rounded-md">
+      <div class="space-x-1 bg-background text-background-foreground mx-2 flex items-center border rounded-md">
         <Button variant="ghost" class="shadow-none" @click="copy">
           复制
         </Button>
@@ -223,6 +223,9 @@ function copy() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <!-- 云同步状态（移动端隐藏） -->
+      <CloudSyncStatus class="hidden sm:inline-flex" />
 
       <!-- 文章信息（移动端隐藏） -->
       <PostInfo class="hidden sm:inline-flex" />
