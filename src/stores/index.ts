@@ -1,5 +1,9 @@
 import type { ReadTimeResults } from 'reading-time'
+import CodeMirror from 'codemirror'
+import { toPng } from 'html-to-image'
+import { v4 as uuid } from 'uuid'
 import DEFAULT_CONTENT from '@/assets/example/markdown.md?raw'
+
 import DEFAULT_CSS_CONTENT from '@/assets/example/theme-css.txt?raw'
 import {
   altKey,
@@ -15,14 +19,10 @@ import {
   formatDoc,
   sanitizeTitle,
 } from '@/utils'
-
 import { css2json, customCssWithTemplate, customizeTheme, postProcessHtml, renderMarkdown } from '@/utils/'
 import { copyPlain } from '@/utils/clipboard'
-import { initRenderer } from '@/utils/renderer'
-import CodeMirror from 'codemirror'
-import { toPng } from 'html-to-image'
 
-import { v4 as uuid } from 'uuid'
+import { initRenderer } from '@/utils/renderer'
 
 /**********************************
  * Post 结构接口
@@ -598,6 +598,108 @@ export const useStore = defineStore(`store`, () => {
     downloadMD(editor.value!.getValue(), posts.value[currentPostIndex.value].title)
   }
 
+  // 导出所有数据到 JSON 文件
+  const exportAllData = () => {
+    const allData = {
+      posts: posts.value,
+      settings: {
+        theme: theme.value,
+        fontFamily: fontFamily.value,
+        fontSize: fontSize.value,
+        primaryColor: primaryColor.value,
+        codeBlockTheme: codeBlockTheme.value,
+        legend: legend.value,
+        isMacCodeBlock: isMacCodeBlock.value,
+        isCiteStatus: isCiteStatus.value,
+        isCountStatus: isCountStatus.value,
+        isUseIndent: isUseIndent.value,
+        showAIToolbox: showAIToolbox.value,
+        cssContentConfig: cssContentConfig.value,
+      },
+      exportTime: new Date().toISOString(),
+      version: `2.0.3`,
+    }
+
+    const blob = new Blob([JSON.stringify(allData, null, 2)], { type: `application/json` })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement(`a`)
+    a.href = url
+    a.download = `md-editor-backup-${new Date().toISOString().split(`T`)[0]}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success(`数据导出成功`)
+  }
+
+  // 导入所有数据从 JSON 文件
+  const importAllData = () => {
+    const input = document.createElement(`input`)
+    input.type = `file`
+    input.accept = `.json`
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0]
+      if (!file)
+        return
+
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target?.result as string)
+
+          // 验证数据格式
+          if (!data.posts || !Array.isArray(data.posts)) {
+            toast.error(`导入文件格式不正确`)
+            return
+          }
+
+          // 导入文章数据
+          posts.value = data.posts
+
+          // 导入设置数据
+          if (data.settings) {
+            const settings = data.settings
+            if (settings.theme)
+              theme.value = settings.theme
+            if (settings.fontFamily)
+              fontFamily.value = settings.fontFamily
+            if (settings.fontSize)
+              fontSize.value = settings.fontSize
+            if (settings.primaryColor)
+              primaryColor.value = settings.primaryColor
+            if (settings.codeBlockTheme)
+              codeBlockTheme.value = settings.codeBlockTheme
+            if (settings.legend)
+              legend.value = settings.legend
+            if (typeof settings.isMacCodeBlock === `boolean`)
+              isMacCodeBlock.value = settings.isMacCodeBlock
+            if (typeof settings.isCiteStatus === `boolean`)
+              isCiteStatus.value = settings.isCiteStatus
+            if (typeof settings.isCountStatus === `boolean`)
+              isCountStatus.value = settings.isCountStatus
+            if (typeof settings.isUseIndent === `boolean`)
+              isUseIndent.value = settings.isUseIndent
+            if (typeof settings.showAIToolbox === `boolean`)
+              showAIToolbox.value = settings.showAIToolbox
+            if (settings.cssContentConfig)
+              cssContentConfig.value = settings.cssContentConfig
+          }
+
+          // 设置当前文章为第一篇
+          if (posts.value.length > 0) {
+            currentPostId.value = posts.value[0].id
+          }
+
+          toast.success(`成功导入 ${data.posts.length} 篇文章和相关设置`)
+        }
+        catch (error) {
+          toast.error(`文件解析失败，请检查文件格式`)
+          console.error(`Import error:`, error)
+        }
+      }
+      reader.readAsText(file)
+    }
+    input.click()
+  }
+
   // 导入默认文档
   const importDefaultContent = () => {
     toRaw(editor.value!).setValue(DEFAULT_CONTENT)
@@ -703,6 +805,8 @@ export const useStore = defineStore(`store`, () => {
     exportEditorContent2HTML,
     exportEditorContent2MD,
     downloadAsCardImage,
+    exportAllData,
+    importAllData,
 
     importMarkdownContent,
     importDefaultContent,

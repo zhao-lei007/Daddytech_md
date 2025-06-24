@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { Cloud, Download, FileCode, FileCog, Settings, Upload } from 'lucide-vue-next'
 import { useStore } from '@/stores'
-import { Download, FileCode, FileCog, Upload } from 'lucide-vue-next'
 
 const store = useStore()
 
@@ -14,9 +14,13 @@ const {
   exportEditorContent2MD,
   importMarkdownContent,
   downloadAsCardImage,
+  exportAllData,
+  importAllData,
 } = store
 
 const editorStateDialogVisible = ref(false)
+const cloudSyncDialogVisible = ref(false)
+const cloudSyncDemoVisible = ref(false)
 </script>
 
 <template>
@@ -42,6 +46,23 @@ const editorStateDialogVisible = ref(false)
         导出 .png
       </MenubarItem>
       <MenubarSeparator />
+      <MenubarItem @click="exportAllData()">
+        <Download class="mr-2 size-4" />
+        导出所有数据
+      </MenubarItem>
+      <MenubarItem @click="importAllData()">
+        <Upload class="mr-2 size-4" />
+        导入所有数据
+      </MenubarItem>
+      <MenubarSeparator />
+      <MenubarItem @click="cloudSyncDemoVisible = true">
+        <Cloud class="mr-2 size-4" />
+        云同步功能
+      </MenubarItem>
+      <MenubarItem @click="cloudSyncDialogVisible = true">
+        <Settings class="mr-2 size-4" />
+        云同步管理
+      </MenubarItem>
       <MenubarItem @click="editorStateDialogVisible = true">
         <FileCog class="mr-2 size-4" />
         导入/导出项目配置
@@ -59,4 +80,10 @@ const editorStateDialogVisible = ref(false)
 
   <!-- 各弹窗挂载 -->
   <EditorStateDialog :visible="editorStateDialogVisible" @close="editorStateDialogVisible = false" />
+  <CloudSyncDialog :visible="cloudSyncDialogVisible" @close="cloudSyncDialogVisible = false" />
+  <CloudSyncDemo
+    :visible="cloudSyncDemoVisible"
+    @close="cloudSyncDemoVisible = false"
+    @open-cloud-sync="() => { cloudSyncDemoVisible = false; cloudSyncDialogVisible = true }"
+  />
 </template>
